@@ -1,3 +1,5 @@
 Flask
 Flask-sqlalchemy
-faslk-wtf
+flask-wtf
+flask_script
+jwt
