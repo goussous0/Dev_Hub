@@ -1,5 +1,8 @@
-Flask
+Flask==1.1.4
 Flask-sqlalchemy
 flask-wtf
+flask_admin
 flask_script
+flask_security
 jwt
+email_validator
