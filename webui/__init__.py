@@ -320,7 +320,7 @@ def text():
 
     
     
-    if session:
+    if session['username']:
         usrname = session['username']
         usr = User.query.filter_by(username=usrname).first()
 
