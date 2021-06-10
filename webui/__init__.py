@@ -1,5 +1,5 @@
 from flask import Blueprint ,render_template, request, url_for ,abort, flash, redirect , send_file ,make_response , send_from_directory
-from flask import session
+from flask import session 
 from flask import jsonify 
 
 
@@ -19,6 +19,7 @@ from config import config
 
 from functools import wraps
 
+import requests
 import jwt
 import re 
 import random 
@@ -32,28 +33,30 @@ import os
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        token = None
-        # jwt is passed in the request header
-        if 'x-access-token' in request.headers:
-            token = request.headers['x-access-token']
-        # return 401 if token is not passed
-        if not token:
-            return jsonify({"status": "error","message": {"token": "Токен истёк"}}), 401
-  
+        
+
+       
+
+
         try:
-            # decoding the payload to fetch the stored details
-            data = jwt.decode(token, current_app.config['SECRET_KEY'])
-            current_user = User.query\
-                .filter_by(username = data['username'])\
-                .first()
-        except:
-            return jsonify({"status": "error","message": {"token": "Токен истёк"}}), 401
-        # returns the current logged in users contex to the routes
-        return  f(current_user, *args, **kwargs)
+            if not session['token'] :
+                return jsonify({"status": "error","message": {"token": "Токен истёк"}})
+            else :
+                data = jwt.decode( session['token'] , current_app.config['SECRET_KEY'] , algorithms=["HS256"])
+                if data['email'] == session['email']:
+                    return  f( *args, **kwargs)
+                
+                else:
+                    return jsonify({"status": "error","message": {"token": "Токен истёк"}})
+
+        except :
+            return jsonify({"status": "error","message": {"token": "Токен истёк"}})
+
+
+        
+        return  f( *args, **kwargs)
   
     return decorated
-
-
 
 
 
@@ -64,6 +67,7 @@ webui = Blueprint('webui', __name__, static_folder='static', static_url_path='/s
 
 
 
+@webui.route('/')
 @webui.route('/home' , methods=['GET'])
 def home():
 
@@ -75,6 +79,12 @@ def home():
 
     
 
+
+@webui.route('/logout')
+def logout():
+    session.pop('token', None )
+    session.pop('email', None )
+    return redirect(url_for('webui.home'))
 
 
 
@@ -90,7 +100,7 @@ def signup():
         name = request.form.get('name')
         password = request.form.get('password')
 
-        user = User.query.filter_by(email=email).first() # if this returns a user, then the email already exists in database
+        user = User.query.filter_by(email=email).first() # if this returns a user, then the email already exists in database    
 
         if user: # if a user is found, we want to redirect back to signup page so user can try again
             return render_template('login.html')
@@ -134,14 +144,17 @@ def login():
         else:
 
 
-            session['username'] = user.username
+            session['email'] = user.email
+            token =jwt.encode({'email':f'{user.email}' , 'exp': datetime.utcnow() + timedelta(minutes=1440)} , current_app.config['SECRET_KEY'] , algorithm="HS256" )  
+            session['token'] = token 
+
+
+
+            print (session['token'])
+
  
 
-            token = jwt.encode({'username': user.username , 'exp' : datetime.utcnow() + timedelta(minutes=1440)}, current_app.config['SECRET_KEY'])  
-
-
-
-            return make_response(jsonify({'token' : token}), 201)
+            return redirect(url_for('webui.home'))
 
 
 
@@ -250,37 +263,42 @@ def create( ):
 
 
 
+    
+
+
 ## this is used for editing the task 
 
-@webui.route('/update/<id>', methods=['POST'])
+@webui.route('/edit/<id>', methods=['GET','POST'])
 @token_required
-def update(id):
-    user = User.query.get(id)
- 
+def edit(id):
+    usr = User.query.get(id)
 
     
-    text = request.args.get('text')
-    status = request.args.get('status')
+
+    if request.method == 'POST':
+
+        text = request.form['text']
+        status = request.form['status']
+
+        if not usr :
+
+            return render_template('usr_edit.html')
+        elif session['email'] == usr.email :
+
+            usr.text = text 
+            usr.status = status 
+
+            db.session.commit()
+
+            return jsonify({"status":"ok"})
 
 
-    ## if user is in the database and the token is valid then edit the text and the status 
-    if user:
+        return redirect(url_for('webui.home'))
 
-        
 
-        user.text = request.args['text']
-        user.status = request.args['status']
-        
-        db.session.commit()
+    else:
+        return render_template('usr_edit.html')
 
-        success = {
-            "status" : "ok"
-        }
-        return jsonify(success)
-
-    
-    
-    
 
 
 
