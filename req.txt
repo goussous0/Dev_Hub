@@ -4,5 +4,5 @@ flask-wtf
 flask_admin
 flask_script
 flask_security
-jwt
+PyJWT
 email_validator
