@@ -19,6 +19,15 @@
     <button onclick="window.location.href='{{ url_for( 'webui.signup') }}'" >
       Sign Up
     </button>
+    <button onclick="window.location.href='{{ url_for( 'webui.login') }}'" >
+      Sign In
+    </button>
+    <button onclick="window.location.href='{{ url_for( 'webui.logout') }}'" >
+      Log Out 
+    </button>
+    <button onclick="window.location.href='{{ url_for( 'webui.home') }}'" >
+      Home
+    </button>
   <div class="content">
     
     <div class="container">
@@ -42,7 +51,7 @@
 
               
                       
-                      <td><a> {{usr.username}}</a>
+                      <td><a  href="{{ url_for('webui.edit', id=usr.id) }}"> {{usr.username}}</a>
                         
                       </td>
                       <td><a> {{usr.email}} </a></td>
@@ -69,9 +78,7 @@
     
     
 
-    <script src="js/jquery-3.3.1.min.js"></script>
-    <script src="js/popper.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
-    <script src="js/main.js"></script>
+
+
   </body>
 </html>
