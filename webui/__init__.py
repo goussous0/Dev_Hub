@@ -318,26 +318,42 @@ def edit(id):
 def text():
 
 
-    
-    
-    if session['username']:
-        usrname = session['username']
-        usr = User.query.filter_by(username=usrname).first()
+    if request.method == "POST":
 
-        if request.method == "POST":
-		  ## GET THE TEXT FROM THE USER
-            TEXT =request.form.get('text')
-            usr.text = TEXT
-            db.session.add(usr)
-            db.session.commit()
-            return redirect(url_for('webui.home'))
-        else:
-            render_template('add_text.html')
+
+        try:
+
+            if not session['email']:
+                return redirect(url_for('webui.login'))
+
+            else:
+
+                usr = User.query.filter_by(email=session['email']).first()
+
+                usr.text = request.form['text']
+                db.session.commit()
+
+                return redirect(url_for('webui.home'))
+
+
+
+        except KeyError as ke :
+            return render_template('add_text.html')
+
+
 
     else:
-        render_template('add_text.html')
 
-    return render_template('add_text.html')
+        try:
+            if not session['email']:
+                return redirect('webui.login')
+        except KeyError as ke:
+
+            return render_template('add_text.html')
+
+        return render_template('add_text.html')    
+
+
 
 
 
